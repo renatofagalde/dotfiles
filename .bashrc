@@ -119,3 +119,8 @@ fi
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
 export SDKMAN_DIR="$HOME/.sdkman"
 [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+
+# configuracao do teclado nos editores -> https://plus.diolinux.com.br/t/teclado-continua-bugado-no-wsl-windows-11/40825/5
+WAYLAND_DISPLAY="wayland-1"
+setxkbmap -model abnt2 -layout br -variant abnt2
+WAYLAND_DISPLAY="wayland-1"
