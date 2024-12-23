@@ -10,8 +10,7 @@ import (
 var (
 	user32           = syscall.NewLazyDLL("user32.dll")
 	getLastInputInfo = user32.NewProc("GetLastInputInfo")
-	setCursorPos     = user32.NewProc("SetCursorPos")
-	mouseEvent       = user32.NewProc("mouse_event")
+	keybdEvent       = user32.NewProc("keybd_event")
 )
 
 type LASTINPUTINFO struct {
@@ -20,10 +19,9 @@ type LASTINPUTINFO struct {
 }
 
 const (
-	MOUSEEVENTF_MOVE    = 0x0001
-	MOUSEEVENTF_ABSOLUTE = 0x8000
-	MOUSEEVENTF_LEFTDOWN = 0x0002
-	MOUSEEVENTF_LEFTUP   = 0x0004
+	VK_MENU       = 0x12 // Alt key
+	VK_TAB        = 0x09 // Tab key
+	KEYEVENTF_KEYUP = 0x02
 )
 
 func getIdleTime() (uint32, error) {
@@ -37,28 +35,27 @@ func getIdleTime() (uint32, error) {
 	return tickCount - lii.dwTime, nil
 }
 
-func simulateMouseClick(x, y int32) {
-	setCursorPos.Call(uintptr(x), uintptr(y))
-	mouseEvent.Call(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
-	mouseEvent.Call(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
-}
+func simulateAltTab() {
+	// Pressiona Alt
+	keybdEvent.Call(VK_MENU, 0, 0, 0)
+	time.Sleep(50 * time.Millisecond)
 
-func isLunchTime() bool {
-	now := time.Now()
-	return now.Hour() == 12
+	// Pressiona Tab
+	keybdEvent.Call(VK_TAB, 0, 0, 0)
+	time.Sleep(50 * time.Millisecond)
+
+	// Solta Tab
+	keybdEvent.Call(VK_TAB, 0, KEYEVENTF_KEYUP, 0)
+	time.Sleep(50 * time.Millisecond)
+
+	// Solta Alt
+	keybdEvent.Call(VK_MENU, 0, KEYEVENTF_KEYUP, 0)
 }
 
 func main() {
 	fmt.Println("Monitorando inatividade...")
 
 	for {
-		// Verifica se está no horário entre 12h e 13h
-		if isLunchTime() {
-			fmt.Println("Horário entre 12h e 13h. Nenhuma ação será realizada.")
-			time.Sleep(1 * time.Minute) // Aguarda 1 minuto antes de verificar novamente
-			continue
-		}
-
 		idleTime, err := getIdleTime()
 		if err != nil {
 			fmt.Println("Erro ao obter tempo de inatividade:", err)
@@ -66,15 +63,8 @@ func main() {
 		}
 
 		if idleTime > 240000 { // 4 minutos em milissegundos
-			fmt.Println("Inatividade detectada! Simulando clique no botão Iniciar.")
-
-			// Salva a posição atual do mouse
-			// Simula um clique no botão Iniciar (geralmente no canto inferior esquerdo)
-			simulateMouseClick(10, 1050)
-
-			// Volta a posição inicial (ajuste conforme sua resolução)
-			time.Sleep(1 * time.Second)
-			simulateMouseClick(960, 540) // Posição de volta (meio da tela neste exemplo)
+			fmt.Println("Inatividade detectada! Simulando Alt+Tab.")
+			simulateAltTab()
 		}
 
 		time.Sleep(5 * time.Second) // Verifica a cada 5 segundos
