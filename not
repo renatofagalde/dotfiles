@@ -32,9 +32,16 @@ func getIdleTime() (time.Duration, error) {
 		return 0, err
 	}
 
-	// Pega o tempo atual do sistema e subtrai do último evento
-	tickCount := uint32(time.Now().UnixMilli())
-	idleMillis := tickCount - lii.dwTime
+	// Pega o tempo atual do sistema em milissegundos
+	currentTick := time.Now().UnixMilli()
+	// Tempo desde o último evento de entrada em milissegundos
+	lastInputTick := int64(lii.dwTime)
+
+	// Calcula o tempo de inatividade
+	idleMillis := currentTick - lastInputTick
+	if idleMillis < 0 {
+		idleMillis = 0 // Evita valores negativos
+	}
 
 	return time.Duration(idleMillis) * time.Millisecond, nil
 }
@@ -58,7 +65,7 @@ func simulateAltTab() {
 
 func main() {
 	fmt.Println("Monitorando inatividade...")
-	lastAction := time.Now() // Marca o tempo da última ação (inicialmente agora)
+	lastAltTab := time.Now() // Marca o tempo da última execução do Alt+Tab
 
 	for {
 		idleDuration, err := getIdleTime()
@@ -67,14 +74,14 @@ func main() {
 			continue
 		}
 
-		// Log de inatividade detectada com hora atual
-		fmt.Printf("[%s] Tempo de inatividade: %v\n", time.Now().Format("15:04:05"), idleDuration)
+		// Exibe o tempo de inatividade com a hora atual
+		fmt.Printf("[%s] Tempo de inatividade: %.0f segundos\n", time.Now().Format("15:04:05"), idleDuration.Seconds())
 
-		// Executa Alt+Tab a cada 4 minutos de inatividade
-		if idleDuration >= 4*time.Minute && time.Since(lastAction) >= 4*time.Minute {
+		// Verifica se o tempo de inatividade é maior ou igual a 4 minutos e se já passaram 4 minutos desde o último Alt+Tab
+		if idleDuration >= 4*time.Minute && time.Since(lastAltTab) >= 4*time.Minute {
 			fmt.Printf("[%s] Inatividade detectada! Simulando Alt+Tab.\n", time.Now().Format("15:04:05"))
 			simulateAltTab()
-			lastAction = time.Now() // Atualiza o tempo da última ação do Alt+Tab
+			lastAltTab = time.Now() // Atualiza o tempo da última execução do Alt+Tab
 		}
 
 		time.Sleep(5 * time.Second) // Verifica a cada 5 segundos
