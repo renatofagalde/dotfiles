@@ -62,12 +62,15 @@ func main() {
 	for {
 		idleDuration, err := getIdleTime()
 		if err != nil {
-			fmt.Println("Erro ao obter tempo de inatividade:", err)
+			fmt.Printf("[%s] Erro ao obter tempo de inatividade: %v\n", time.Now().Format("15:04:05"), err)
 			continue
 		}
 
+		// Log de inatividade detectada com hora atual
+		fmt.Printf("[%s] Tempo de inatividade: %v\n", time.Now().Format("15:04:05"), idleDuration)
+
 		if idleDuration >= 4*time.Minute {
-			fmt.Println("Inatividade detectada! Simulando Alt+Tab.")
+			fmt.Printf("[%s] Inatividade detectada! Simulando Alt+Tab.\n", time.Now().Format("15:04:05"))
 			simulateAltTab()
 		}
 
