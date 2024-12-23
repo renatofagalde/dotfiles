@@ -28,21 +28,25 @@ func getIdleTime() (time.Duration, error) {
 	var lii LASTINPUTINFO
 	lii.cbSize = uint32(unsafe.Sizeof(lii))
 
+	// Chama a API para obter o tempo do último evento de entrada
 	r, _, err := getLastInputInfo.Call(uintptr(unsafe.Pointer(&lii)))
 	if r == 0 {
 		return 0, err
 	}
 
-	// Tempo atual em milissegundos
-	tickCount := time.Now().UnixMilli()
+	// Obtém o tempo atual do sistema em ticks (milissegundos desde o boot)
+	currentTick := time.Now().UnixMilli()
+
+	// Converte o valor retornado para milissegundos
 	lastInputTick := int64(lii.dwTime)
 
-	// Calcula a diferença
-	idleMillis := tickCount - lastInputTick
+	// Calcula o tempo de inatividade
+	idleMillis := currentTick - lastInputTick
 	if idleMillis < 0 {
-		idleMillis = 0 // Evita valores negativos por inconsistências
+		idleMillis = 0 // Garante que não haverá valores negativos
 	}
 
+	// Retorna o tempo de inatividade como `time.Duration`
 	return time.Duration(idleMillis) * time.Millisecond, nil
 }
 
