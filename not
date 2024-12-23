@@ -58,6 +58,7 @@ func simulateAltTab() {
 
 func main() {
 	fmt.Println("Monitorando inatividade...")
+	lastAction := time.Now() // Marca o tempo da última ação (inicialmente agora)
 
 	for {
 		idleDuration, err := getIdleTime()
@@ -69,9 +70,11 @@ func main() {
 		// Log de inatividade detectada com hora atual
 		fmt.Printf("[%s] Tempo de inatividade: %v\n", time.Now().Format("15:04:05"), idleDuration)
 
-		if idleDuration >= 4*time.Minute {
+		// Verifica se a inatividade excedeu 4 minutos e se já passou o intervalo desde a última ação
+		if idleDuration >= 4*time.Minute && time.Since(lastAction) >= 4*time.Minute {
 			fmt.Printf("[%s] Inatividade detectada! Simulando Alt+Tab.\n", time.Now().Format("15:04:05"))
 			simulateAltTab()
+			lastAction = time.Now() // Atualiza o tempo da última ação
 		}
 
 		time.Sleep(5 * time.Second) // Verifica a cada 5 segundos
